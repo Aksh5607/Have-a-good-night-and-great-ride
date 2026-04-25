@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pookie's Universe</title>
+    <style>
+        :root {
+            --pookie: #ffc2d1;
+            --grumpy: #ff5e78;
+            --sky-1: #0a0a1a;
+            --sky-2: #000000;
+            --dynamic-text: #ffffff;
+            --glow: rgba(255, 194, 209, 0.4);
+        }
+
+        /* Reset for Mobile Browsers */
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100%; width: 100%; overflow: hidden; background: #000; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+
+        /* THE AURORA NEBULA BACKGROUND */
+        #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; background: var(--sky-1); }
+        .aurora {
+            position: absolute; width: 200%; height: 200%; top: -50%; left: -50%;
+            background: radial-gradient(circle at 50% 50%, rgba(79, 172, 254, 0.15) 0%, rgba(0,0,0,0) 50%),
+                        radial-gradient(circle at 20% 30%, rgba(255, 194, 209, 0.1) 0%, rgba(0,0,0,0) 40%);
+            filter: blur(60px); animation: aurora-flow 20s infinite alternate;
+        }
+        @keyframes aurora-flow { 0% { transform: rotate(0deg) scale(1); } 100% { transform: rotate(10deg) scale(1.1); } }
+
+        /* 3D OCTO CONSOLE - CENTERED FOR MOBILE */
+        .octo-box { position: fixed; top: 15%; left: 50%; transform: translateX(-50%); z-index: 100; perspective: 1000px; animation: zero-g 4s infinite ease-in-out; }
+        @keyframes zero-g { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, -15px); } }
+        
+        .octo { width: 120px; height: 90px; position: relative; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; }
+        .face { position: absolute; width: 100%; height: 100%; border-radius: 40px 40px 30px 30px; display: flex; flex-direction: column; justify-content: center; align-items: center; backface-visibility: hidden; box-shadow: 0 15px 40px rgba(0,0,0,0.8); border: 1.5px solid rgba(255,255,255,0.2); }
+        .side-p { background: var(--pookie); color: #b33951; }
+        .side-g { background: var(--grumpy); color: white; transform: rotateY(180deg); }
+        
+        .eyes { display: flex; gap: 20px; }
+        .eye { width: 12px; height: 12px; background: currentColor; border-radius: 50%; position: relative; }
+        .side-g .eye::before { content: ''; position: absolute; top: -5px; width: 14px; height: 3px; background: white; transform: rotate(25deg); left: -1px; border-radius: 2px; }
+        .side-g .eye:last-child::before { transform: rotate(-25deg); left: auto; right: -1px; }
+        .mouth { font-size: 1.3rem; font-weight: bold; margin-top: 5px; }
+        
+        .tentacles { position: absolute; bottom: -10px; display: flex; gap: 2px; }
+        .tentacle { width: 24px; height: 18px; background: inherit; border-radius: 0 0 8px 8px; }
+
+        /* INTERACTIVE PARTICLES */
+        .particle { position: fixed; pointer-events: none; background: white; border-radius: 50%; z-index: 50; animation: fade-out 0.8s forwards; }
+        @keyframes fade-out { to { transform: translateY(-30px) scale(0); opacity: 0; } }
+
+        /* VIEWPORT CARDS */
+        .viewport { display: flex; width: 100%; height: 100%; position: relative; z-index: 10; }
+        section { position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; transition: 0.6s ease; transform: scale(0.9); pointer-events: none; }
+        section.active { opacity: 1; transform: scale(1); pointer-events: auto; }
+        
+        .glass-card { 
+            background: rgba(255, 255, 255, 0.03); 
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            border-radius: 35px; padding: 40px 25px; 
+            text-align: center; width: 100%; max-width: 320px; 
+            color: var(--dynamic-text); box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+            margin-top: 80px; /* Space for Octo */
+        }
+
+        h1 { font-size: 1.6rem; font-weight: 800; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 3px; background: linear-gradient(to right, #fff, var(--pookie)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        p { font-size: 1rem; line-height: 1.6; opacity: 0.75; font-weight: 300; }
+
+        /* REVEAL BUTTON - STICKY AT BOTTOM */
+        .magic-btn-container { position: fixed; bottom: 10%; left: 50%; transform: translateX(-50%); z-index: 150; opacity: 0; transition: 1s ease; }
+        .magic-btn-container.show { opacity: 1; }
+        .magic-btn { background: #fff; color: #000; border: none; padding: 18px 35px; border-radius: 50px; font-weight: 900; letter-spacing: 2px; box-shadow: 0 0 20px var(--glow); font-size: 0.9rem; }
+
+        /* OVERLAY */
+        #wish-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 300; display: none; align-items: center; justify-content: center; text-align: center; padding: 30px; backdrop-filter: blur(40px); }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container">
+        <div class="aurora"></div>
+        <canvas id="nebula"></canvas>
+    </div>
+
+    <div class="magic-btn-container" id="surpriseContainer">
+        <button class="magic-btn" onclick="showWish()">REVEAL MY NOTE ✨</button>
+    </div>
+
+    <div id="wish-overlay" onclick="this.style.display='none'">
+        <div class="wish-content" style="color:white">
+            <h2 id="time-title" style="font-size: 2rem; margin-bottom: 20px; color: var(--pookie);"></h2>
+            <p id="time-msg" style="font-size: 1.2rem; line-height: 1.7; font-weight: 300; font-style: italic;"></p>
+            <p style="margin-top: 50px; font-size: 0.6rem; letter-spacing: 4px; opacity: 0.4;">TAP TO CLOSE</p>
+        </div>
+    </div>
+
+    <div class="octo-box" onclick="flip()">
+        <div class="octo" id="plush">
+            <div class="face side-p"><div class="eyes"><div class="eye"></div><div class="eye"></div></div><div class="mouth">◡</div><div class="tentacles"><div class="tentacle"></div><div class="tentacle"></div><div class="tentacle"></div><div class="tentacle"></div></div></div>
+            <div class="face side-g"><div class="eyes"><div class="eye"></div><div class="eye"></div></div><div class="mouth">w</div><div class="tentacles"><div class="tentacle"></div><div class="tentacle"></div><div class="tentacle"></div><div class="tentacle"></div></div></div>
+        </div>
+    </div>
+
+    <div class="viewport">
+        <section class="active"><div class="glass-card"><h1>The sorry</h1><p>Pujaa i know i did hurt u more than i should have.But plz i want a last chance to make things all right.
+        </p></div></section>
+        <section><div class="glass-card"><h1>Something special for the special</h1><p>puja i know u have changed ur behavior but i still love the way we were before and want to make it right.</p></div></section>
+        <section><div class="glass-card"><h1>A last chance</h1><p>Puja as always i want a last chance to make things right. ill never ask for any cahnce this will be the last.</p></div></section>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('nebula');
+        const ctx = canvas.getContext('2d');
+        let stars = [];
+
+        function initStars() {
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            stars = [];
+            for(let i=0; i<80; i++) stars.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*1.5, o: Math.random() });
+        }
+
+        function drawStars() {
+            ctx.clearRect(0,0,canvas.width, canvas.height);
+            stars.forEach(s => {
+                ctx.fillStyle = `rgba(255,255,255,${s.o})`;
+                ctx.beginPath(); ctx.arc(s.x, s.y, s.s, 0, Math.PI*2); ctx.fill();
+            });
+            requestAnimationFrame(drawStars);
+        }
+
+        // MOBILE TOUCH STARDUST
+        const createParticle = (x, y) => {
+            for(let i=0; i<3; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.width = p.style.height = Math.random() * 3 + 'px';
+                p.style.left = x + 'px'; p.style.top = y + 'px';
+                document.body.appendChild(p);
+                setTimeout(() => p.remove(), 800);
+            }
+        }
+
+        function showWish() {
+            const hr = new Date().getHours();
+            const title = document.getElementById('time-title');
+            const msg = document.getElementById('time-msg');
+            if (hr >= 5 && hr < 17) {
+                title.innerText = "Morning Star ☀️";
+                msg.innerText = "The sun came up just to see you today. But even he’s jealous because you're more bright than his morning glow.";
+            } else {
+                title.innerText = "Sleeping Beauty 🌙";
+                msg.innerText = "Go to sleep now, my Sleeping Beauty. The moon is actually hiding because he's shy—he knows you're far prettier than him.";
+            }
+            document.getElementById('wish-overlay').style.display = 'flex';
+        }
+
+        let cur = 0; let seenAll = false; let startX = 0;
+        const sections = document.querySelectorAll('section');
+        const visited = new Set([0]);
+
+        function flip() {
+            const plush = document.getElementById('plush');
+            const isFlipped = plush.style.transform.includes('180deg');
+            plush.style.transform = isFlipped ? 'rotateY(0deg)' : 'rotateY(180deg)';
+        }
+
+        document.addEventListener('touchstart', e => {
+            startX = e.touches[0].clientX;
+            createParticle(e.touches[0].clientX, e.touches[0].clientY);
+        });
+
+        document.addEventListener('touchend', e => {
+            let diff = startX - e.changedTouches[0].clientX;
+            if(Math.abs(diff) > 40) {
+                sections[cur].classList.remove('active');
+                if(diff > 0) cur = (cur + 1) % 3; else cur = (cur - 1 + 3) % 3;
+                sections[cur].classList.add('active');
+                visited.add(cur);
+                if(visited.size === 3 && !seenAll) { seenAll = true; document.getElementById('surpriseContainer').classList.add('show'); }
+            }
+        });
+
+        initStars(); drawStars();
+        window.addEventListener('resize', initStars);
+    </script>
+</body>
+</html>
